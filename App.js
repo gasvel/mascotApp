@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image,TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Image,TouchableOpacity,FlatList,ActivityIndicator } from 'react-native';
 import { SearchBar,Header } from 'react-native-elements';
 
 
@@ -7,14 +7,29 @@ export default class App extends React.Component {
 
   state = {
     search: '',
+    posts: [],
+    loading: true,
   };
 
   updateSearch = search => {
     this.setState({ search });
   };
 
+  componentDidMount(){
+    fetch('http://192.168.0.105:3000/posts.json').then((response) => response.json()).then(
+      (resJson) => this.setState({posts: resJson,loading:false})
+    ).catch(error => console.log(error));
+  }
+
   render() {
-    const { search } = this.state;
+    const { search,posts } = this.state;
+    if(this.state.isLoading){
+      return(
+        <View style={{flex: 1, padding: 20}}>
+          <ActivityIndicator/>
+        </View>
+      )
+    }
 
     return (
       <View style={styles.container}>
@@ -24,14 +39,19 @@ export default class App extends React.Component {
           rightComponent={{ icon: 'home', color: '#fff' }}
           />
           <SearchBar
-          placeholder="Type Here..."
+          placeholder="Buscar post..."
           onChangeText={this.updateSearch}
           value={search}
         />
-        <TouchableOpacity style={styles.card}>
+         <FlatList
+          data={this.state.posts}
+          renderItem={({item}) =>  <TouchableOpacity style={styles.card}>
           <Image style={styles.cardImage} source={{uri:'https://nerdist.com/wp-content/uploads/2017/07/MrPoopy_FEAT.jpg'}}></Image>
-          <Text style={styles.cardText}>Titulo publicacion</Text>
-        </TouchableOpacity>
+          <Text style={styles.cardText}>{item.title}</Text>
+        </TouchableOpacity>}
+          keyExtractor={({id}, index) => id}
+        />
+
       </View>
     );
   }
